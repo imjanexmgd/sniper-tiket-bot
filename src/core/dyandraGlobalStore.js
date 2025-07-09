@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export default async function bibiConcert(targetUrl) {
+export default async function dyandraGlobalStore(targetUrl) {
   const maxRetryingCount = 3;
   let retryingCount = 1;
   const jsonName = targetUrl.replace('https://', '').replace('/', '');

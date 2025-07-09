@@ -2,7 +2,7 @@ import fs from 'fs';
 import inquirer from 'inquirer';
 import { sendMessageToChannel } from './src/bot/telegramBot.js';
 import path from 'path';
-import bibiConcert from './src/core/bibi-concert.js';
+import dyandraGlobalStore from './src/core/dyandraGlobalStore.js';
 
 function formatLog(message) {
   const now = new Date();
@@ -48,7 +48,7 @@ function formatLog(message) {
     if (askMode == 0) {
       while (true) {
         try {
-          data = await bibiConcert(url);
+          data = await dyandraGlobalStore(url);
         } catch (error) {
           continue;
         }
@@ -175,7 +175,7 @@ function formatLog(message) {
     if (askMode == 1) {
       while (true) {
         try {
-          data = await bibiConcert(url);
+          data = await dyandraGlobalStore(url);
         } catch (error) {
           continue;
         }
@@ -280,7 +280,7 @@ function formatLog(message) {
     if (askMode == 2) {
       while (true) {
         try {
-          data = await bibiConcert(url);
+          data = await dyandraGlobalStore(url);
         } catch (error) {
           continue;
         }
@@ -373,7 +373,7 @@ function formatLog(message) {
                 link: `${target.link}`,
                 status: 'found',
               });
-              buttonDayOneStatus = true;
+              buttonDayTwoStatus = true;
             }
           } else {
             result.push({
@@ -381,9 +381,13 @@ function formatLog(message) {
               link: null,
               status: 'skipping',
             });
-            buttonDayOneStatus = true;
+            buttonDayTwoStatus = true;
           }
         }
+        if (buttonDayOneStatus == true && buttonDayTwoStatus == true) {
+          break;
+        }
+        i++;
       }
     }
     console.log(result);
