@@ -32,6 +32,10 @@ function formatLog(message) {
             name: 'Global Presale',
             value: 1,
           },
+          {
+            name: 'General Sale',
+            value: 2,
+          },
         ],
       },
     ]);
@@ -182,7 +186,7 @@ function formatLog(message) {
         if (rows.length == 4) {
           buttonDayTwoStatus = true;
           let target = rows[1]?.columns[1]?.elements[1];
-          if (target) {
+          if (target && buttonDayOneStatus == false) {
             if (target.link == '') {
               console.log(
                 formatLog(`[GLOBAL PRESALE] [1] [NOT FOUND] request ${i}`)
@@ -210,7 +214,7 @@ function formatLog(message) {
           }
         } else {
           // get button day one
-          if (rows[2]?.columns[1].elements[1]) {
+          if (rows[2]?.columns[1].elements[1] && buttonDayOneStatus == false) {
             let target = rows[2]?.columns[1].elements[1];
             if (target.link == '') {
               console.log(
@@ -238,7 +242,7 @@ function formatLog(message) {
             buttonDayOneStatus = true;
           }
           // get button day two
-          if (rows[4].columns[1].elements[1]) {
+          if (rows[4].columns[1].elements[1] && buttonDayTwoStatus == false) {
             let target = rows[4].columns[1].elements[1];
             if (target.link == '') {
               console.log(
@@ -270,6 +274,116 @@ function formatLog(message) {
           break;
         }
         i++;
+      }
+    }
+    // General Sale
+    if (askMode == 2) {
+      while (true) {
+        try {
+          data = await bibiConcert(url);
+        } catch (error) {
+          continue;
+        }
+        const rows = data.layout.sections[5].rows;
+        // just day 1
+        if (rows.length == 4) {
+          buttonDayTwoStatus = true;
+          let target = rows[1]?.columns[2].elements[1];
+          if (target && buttonDayOneStatus == false) {
+            if (target.link == '') {
+              console.log(
+                formatLog(`[GENERAL SALE] [1] [NOT FOUND] request ${i}`)
+              );
+            } else {
+              const message = formatLog(
+                `[GENERAL SALE] [1] [FOUND] ${target.link}`
+              );
+              console.log(message);
+              await sendMessageToChannel(message);
+              result.push({
+                name: 'MEMBERSHIP PRESALE DAY 1',
+                link: `${target.link}`,
+                status: 'found',
+              });
+              buttonDayOneStatus = true;
+            }
+          } else {
+            result.push({
+              name: 'GENERAL SALE DAY 1',
+              link: null,
+              status: 'skipping',
+            });
+            buttonDayOneStatus = true;
+          }
+        } else {
+          // ANY DAY 2
+
+          // GETBUTTONDAYONE
+          if (rows[2]?.columns[2]?.elements[1] && buttonDayOneStatus == false) {
+            let target = rows[2]?.columns[2]?.elements[1];
+            if (target) {
+              if (target.link == '') {
+                console.log(
+                  formatLog(`[GENERAL SALE] [1] [NOT FOUND] request ${i}`)
+                );
+              } else {
+                const message = formatLog(
+                  `[GENERAL SALE] [1] [FOUND] ${target.link}`
+                );
+                console.log(message);
+                await sendMessageToChannel(message);
+                result.push({
+                  name: 'GENERAL DAY SALE DAY 1',
+                  link: `${target.link}`,
+                  status: 'found',
+                });
+                buttonDayOneStatus = true;
+              }
+            } else {
+              result.push({
+                name: 'GENERAL SALE DAY 1',
+                link: null,
+                status: 'skipping',
+              });
+              buttonDayOneStatus = true;
+            }
+          } else {
+            result.push({
+              name: 'GENERAL SALE DAY 1',
+              link: null,
+              status: 'skipping',
+            });
+            buttonDayOneStatus = true;
+          }
+          // GETBUTTON DAY TWO
+          if (rows[4]?.columns[2].elements[1] && buttonDayTwoStatus == false) {
+            let target = rows[4]?.columns[2].elements[1];
+            if (target.link == '') {
+              console.log(
+                formatLog(`[GENERAL SALE] [2] [NOT FOUND] request ${i}`)
+              );
+            } else {
+              const message = formatLog(
+                `[GENERAL SALE] [2] [FOUND] ${target.link}`
+              );
+              console.log(message);
+              await sendMessageToChannel(message);
+              result.push({
+                name: 'GENERAL SALE DAY 2',
+                link: `${target.link}`,
+                status: 'found',
+              });
+              buttonDayOneStatus = true;
+            }
+          } else {
+            result.push({
+              name: 'GENERAL SALE DAY 2',
+              link: null,
+              status: 'skipping',
+            });
+            buttonDayOneStatus = true;
+          }
+        }
       }
     }
     console.log(result);
