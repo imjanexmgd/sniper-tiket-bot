@@ -29,7 +29,7 @@ function formatLog(message) {
             value: 0,
           },
           {
-            name: 'Global Presale',
+            name: 'Dyandra Global Presale',
             value: 1,
           },
           {
@@ -63,11 +63,13 @@ function formatLog(message) {
           if (target) {
             if (target.link == '') {
               console.log(
-                formatLog(`[MEMBERSHIP PRESALE] [1] [NOT FOUND] request ${i}`)
+                formatLog(
+                  `[MEMBERSHIP PRESALE] [DAY 1] [NOT FOUND] request ${i}`
+                )
               );
             } else {
               const message = formatLog(
-                `[MEMBERSHIP PRESALE] [1] [FOUND] ${target.link}`
+                `[MEMBERSHIP PRESALE] [DAY 1] [FOUND] ${target.link}`
               );
               console.log(message);
               await sendMessageToChannel(message);
@@ -171,7 +173,7 @@ function formatLog(message) {
         i++;
       }
     }
-    // Global Presale
+    // Dyandra Global Presale
     if (askMode == 1) {
       while (true) {
         try {
@@ -189,16 +191,18 @@ function formatLog(message) {
           if (target && buttonDayOneStatus == false) {
             if (target.link == '') {
               console.log(
-                formatLog(`[GLOBAL PRESALE] [1] [NOT FOUND] request ${i}`)
+                formatLog(
+                  `[DYANDRA GLOBAL PRESALE] [DAY 1] [NOT FOUND] request ${i}`
+                )
               );
             } else {
               const message = formatLog(
-                `[GLOBAL PRESALE] [1] [FOUND] ${target.link}`
+                `[DYANDRA GLOBAL PRESALE] [DAY 1] [FOUND] ${target.link}`
               );
               console.log(message);
               await sendMessageToChannel(message);
               result.push({
-                name: 'GLOBAL PRESALE DAY 1',
+                name: 'DYANDRA GLOBAL PRESALE DAY 1',
                 link: `${target.link}`,
                 status: 'found',
               });
@@ -206,7 +210,7 @@ function formatLog(message) {
             }
           } else {
             result.push({
-              name: 'GLOBAL PRESALE DAY 1',
+              name: 'DYANDRA GLOBAL PRESALE DAY 1',
               link: null,
               status: 'skipping',
             });
@@ -218,16 +222,18 @@ function formatLog(message) {
             let target = rows[2]?.columns[1].elements[1];
             if (target.link == '') {
               console.log(
-                formatLog(`[GLOBAL PRESALE] [1] [NOT FOUND] request ${i}`)
+                formatLog(
+                  `[DYANDRA GLOBAL PRESALE] [DAY 1] [NOT FOUND] request ${i}`
+                )
               );
             } else {
               const message = formatLog(
-                `[GLOBAL PRESALE] [1] [FOUND] ${target.link}`
+                `[DYANDRA GLOBAL PRESALE] [DAY 1] [FOUND] ${target.link}`
               );
               console.log(message);
               await sendMessageToChannel(message);
               result.push({
-                name: 'GLOBAL PRESALE DAY 1',
+                name: 'DYANDRA GLOBAL PRESALE DAY 1',
                 link: `${target.link}`,
                 status: 'found',
               });
@@ -235,7 +241,7 @@ function formatLog(message) {
             }
           } else {
             result.push({
-              name: 'GLOBAL PRESALE DAY 1',
+              name: 'DYANDRA GLOBAL PRESALE DAY 1',
               link: null,
               status: 'skipping',
             });
@@ -246,16 +252,18 @@ function formatLog(message) {
             let target = rows[4].columns[1].elements[1];
             if (target.link == '') {
               console.log(
-                formatLog(`[GLOBAL PRESALE] [2] [NOT FOUND] request ${i}`)
+                formatLog(
+                  `[DYANDRA GLOBAL PRESALE] [DAY 2] [NOT FOUND] request ${i}`
+                )
               );
             } else {
               const message = formatLog(
-                `[GLOBAL PRESALE] [2] [FOUND] ${target.link}`
+                `[DYANDRA GLOBAL PRESALE] [DAY 2] [FOUND] ${target.link}`
               );
               console.log(message);
               await sendMessageToChannel(message);
               result.push({
-                name: 'GLOBAL PRESALE DAY 2',
+                name: 'DYANDRA GLOBAL PRESALE DAY 2',
                 link: `${target.link}`,
                 status: 'found',
               });
@@ -263,7 +271,7 @@ function formatLog(message) {
             }
           } else {
             result.push({
-              name: 'GLOBAL PRESALE DAY 2',
+              name: 'DYANDRA GLOBAL PRESALE DAY 2',
               link: null,
               status: 'skipping',
             });
@@ -292,11 +300,11 @@ function formatLog(message) {
           if (target && buttonDayOneStatus == false) {
             if (target.link == '') {
               console.log(
-                formatLog(`[GENERAL SALE] [1] [NOT FOUND] request ${i}`)
+                formatLog(`[GENERAL SALE] [DAY 1] [NOT FOUND] request ${i}`)
               );
             } else {
               const message = formatLog(
-                `[GENERAL SALE] [1] [FOUND] ${target.link}`
+                `[GENERAL SALE] [DAY 1] [FOUND] ${target.link}`
               );
               console.log(message);
               await sendMessageToChannel(message);
@@ -324,11 +332,11 @@ function formatLog(message) {
             if (target) {
               if (target.link == '') {
                 console.log(
-                  formatLog(`[GENERAL SALE] [1] [NOT FOUND] request ${i}`)
+                  formatLog(`[GENERAL SALE] [DAY 1] [NOT FOUND] request ${i}`)
                 );
               } else {
                 const message = formatLog(
-                  `[GENERAL SALE] [1] [FOUND] ${target.link}`
+                  `[GENERAL SALE] [DAY 1] [FOUND] ${target.link}`
                 );
                 console.log(message);
                 await sendMessageToChannel(message);
@@ -360,11 +368,11 @@ function formatLog(message) {
             let target = rows[4]?.columns[2].elements[1];
             if (target.link == '') {
               console.log(
-                formatLog(`[GENERAL SALE] [2] [NOT FOUND] request ${i}`)
+                formatLog(`[GENERAL SALE] [DAY 2] [NOT FOUND] request ${i}`)
               );
             } else {
               const message = formatLog(
-                `[GENERAL SALE] [2] [FOUND] ${target.link}`
+                `[GENERAL SALE] [DAY 2] [FOUND] ${target.link}`
               );
               console.log(message);
               await sendMessageToChannel(message);
