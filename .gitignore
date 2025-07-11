@@ -2,4 +2,3 @@ node_modules
 .env
 nct.json
 test.json
-main.js
