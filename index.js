@@ -2,8 +2,8 @@ import fs from 'fs';
 import inquirer from 'inquirer';
 import { sendMessageToChannel } from './src/bot/telegramBot.js';
 import path from 'path';
-import dyandraGlobalStore from './src/core/dyandraGlobalStore.js';
-
+import getJsonWebFormat from './src/core/getJsonWebFormat.js';
+import lodash from 'lodash';
 function formatLog(message) {
   const now = new Date();
   const time =
@@ -12,393 +12,143 @@ function formatLog(message) {
     now.getMilliseconds().toString().padStart(3, '0');
   return `[${time}] ${message}`;
 }
-
+const findColumnsWithLabel = (obj, keyword, pathTrace = '') => {
+  let result = [];
+  if (Array.isArray(obj)) {
+    obj.forEach((item, index) => [
+      (result = result.concat(
+        findColumnsWithLabel(item, keyword, `${pathTrace}[${index}]`)
+      )),
+    ]);
+  } else if (typeof obj == 'object' && obj != null) {
+    if (obj.elements && Array.isArray(obj.elements)) {
+      const hasLabel = obj.elements.some(
+        (el) =>
+          el.label && typeof el.label == 'string' && el.label.includes(keyword)
+      );
+      if (hasLabel) {
+        result.push({ path: pathTrace, column: obj });
+      }
+    }
+    for (const key in obj) {
+      result = result.concat(
+        findColumnsWithLabel(obj[key], keyword, `${pathTrace}.${key}`)
+      );
+    }
+  }
+  return result;
+};
 (async () => {
   try {
     process.stdout.write('\x1Bc');
     const targetPath = path.join(process.cwd(), 'target.txt');
     const url = fs.readFileSync(targetPath, 'utf-8');
-    const { askMode } = await inquirer.prompt([
+    let data = await getJsonWebFormat(url);
+    const { inputKeyword } = await inquirer.prompt([
       {
-        type: 'list',
-        message: 'select to filter',
-        name: 'askMode',
-        choices: [
-          {
-            name: 'Membership (GL) PreSale',
-            value: 0,
-          },
-          {
-            name: 'Dyandra Global Presale',
-            value: 1,
-          },
-          {
-            name: 'General Sale',
-            value: 2,
-          },
-        ],
+        type: 'input',
+        message: 'input keyword at button',
+        name: 'inputKeyword',
       },
     ]);
-    let result = [];
-    let data;
-    let buttonDayOneStatus = false;
-    let buttonDayTwoStatus = false;
+    const matches = findColumnsWithLabel(data, inputKeyword);
+    const choices = matches.map((item, index) => {
+      const label =
+        item.column.elements.find((el) => el.label)?.label || '(no label)';
+      return {
+        name: `${label} [BUTTON ${index + 1}]`,
+        value: item.path,
+        label,
+        index: index + 1,
+        path: item.path,
+        column: item.column,
+      };
+    });
+    const { selectButtons } = await inquirer.prompt([
+      {
+        type: 'checkbox',
+        message: 'select button to snipe',
+        name: 'selectButtons',
+        choices: choices.map(({ name, value }) => ({ name, value })),
+        validate: (answer) => {
+          if (answer.length < 1) {
+            return 'Pilih minimal satu tombol!';
+          }
+          return true;
+        },
+      },
+    ]);
+
+    const foundPaths = new Set();
     let i = 1;
-    // Membership Presale
-    if (askMode == 0) {
-      while (true) {
-        try {
-          data = await dyandraGlobalStore(url);
-        } catch (error) {
-          continue;
-        }
-        // check length for check day 2 or day 1 only
-        const rows = data.layout.sections[5].rows;
-        // just day 1
-        if (rows.length == 4) {
-          buttonDayTwoStatus = true;
-
-          let target =
-            data?.layout?.sections[5]?.rows[1]?.columns[0]?.elements[1];
-          if (target) {
-            if (target.link == '') {
-              console.log(
-                formatLog(
-                  `[MEMBERSHIP PRESALE] [DAY 1] [NOT FOUND] request ${i}`
-                )
-              );
-            } else {
-              const message = formatLog(
-                `[MEMBERSHIP PRESALE] [DAY 1] [FOUND] ${target.link}`
-              );
-              console.log(message);
-              await sendMessageToChannel(message);
-              result.push({
-                name: 'MEMBERSHIP PRESALE DAY 1',
-                link: `${target.link}`,
-                status: 'found',
-              });
-              buttonDayOneStatus = true;
-            }
-          } else {
-            result.push({
-              name: 'MEMBERSHIP PRESALE DAY 1',
-              link: null,
-              status: 'skipping',
-            });
-            buttonDayOneStatus = true;
-          }
-        } else {
-          // any day 2
-
-          //   getbuttondayOne
-          if (data.layout?.sections[5]?.rows[2]?.columns[0]?.elements[1]) {
-            let target = rows[2]?.columns[0].elements[1];
-            if (target) {
-              if (target.link == '') {
-                console.log(
-                  formatLog(`[MEMBERSHIP PRESALE] [1] [NOT FOUND] request ${i}`)
-                );
-              } else {
-                const message = formatLog(
-                  `[MEMBERSHIP PRESALE] [1] [FOUND] ${target.link}`
-                );
-                console.log(message);
-                await sendMessageToChannel(message);
-                result.push({
-                  name: 'MEMBERSHIP PRESALE DAY 1',
-                  link: `${target.link}`,
-                  status: 'found',
-                });
-                buttonDayOneStatus = true;
-              }
-            } else {
-              result.push({
-                name: 'MEMBERSHIP PRESALE DAY 1',
-                link: null,
-                status: 'skipping',
-              });
-              buttonDayOneStatus = true;
-            }
-          } else {
-            console.log(
-              formatLog(
-                `[MEMBERSHIP PRESALE] [1] [NOT FOUND AT ROWS] request ${i}`
-              )
-            );
-            result.push({
-              name: 'MEMBERSHIP PRESALE DAY 1',
-              link: null,
-              status: 'skipping',
-            });
-            buttonDayOneStatus = true;
-          }
-          // get buttonDayTwo
-          if (rows[4]?.columns[0]?.elements[1]) {
-            let target = rows[4]?.columns[0]?.elements[1];
-            if (target.link == '') {
-              console.log(
-                formatLog(`[MEMBERSHIP PRESALE] [2] [NOT FOUND] request ${i}`)
-              );
-            } else {
-              const message = formatLog(
-                `[MEMBERSHIP PRESALE] [2] [FOUND] ${target.link}`
-              );
-              console.log(message);
-              await sendMessageToChannel(message);
-              result.push({
-                name: 'MEMBERSHIP PRESALE DAY 2',
-                link: `${target.link}`,
-                status: 'found',
-              });
-              buttonDayTwoStatus = true;
-            }
-          } else {
-            console.log(
-              formatLog(
-                `[MEMBERSHIP PRESALE] [2] [NOT FOUND AT ROWS] request ${i}`
-              )
-            );
-            result.push({
-              name: 'MEMBERSHIP PRESALE DAY 2',
-              link: null,
-              status: 'skipping',
-            });
-            buttonDayTwoStatus = true;
-          }
-        }
-        if (buttonDayOneStatus == true && buttonDayTwoStatus == true) {
+    while (true) {
+      const data = await getJsonWebFormat(url);
+      for (const path of selectButtons) {
+        if (foundPaths.has(path)) continue;
+        const selectedButton = choices.find((c) => c.path === path);
+        const target = selectedButton.path.replace('.l', 'l');
+        const rows = lodash.get(data, target);
+        const elements = rows?.elements.find((e) => e.label);
+        let targetedElements = elements;
+        if (!targetedElements) {
+          console.log(formatLog(`[ERROR] NOT FOUND ROWS`));
+          foundPaths.add(path);
           break;
         }
-        i++;
-      }
-    }
-    // Dyandra Global Presale
-    if (askMode == 1) {
-      while (true) {
-        try {
-          data = await dyandraGlobalStore(url);
-        } catch (error) {
-          continue;
-        }
-        // check length for check day 2 or day only
-        const rows = data.layout.sections[5].rows;
-
-        // just day 1
-        if (rows.length == 4) {
-          buttonDayTwoStatus = true;
-          let target = rows[1]?.columns[1]?.elements[1];
-          if (target && buttonDayOneStatus == false) {
-            if (target.link == '') {
-              console.log(
-                formatLog(
-                  `[DYANDRA GLOBAL PRESALE] [DAY 1] [NOT FOUND] request ${i}`
-                )
-              );
-            } else {
-              const message = formatLog(
-                `[DYANDRA GLOBAL PRESALE] [DAY 1] [FOUND] ${target.link}`
-              );
-              console.log(message);
-              await sendMessageToChannel(message);
-              result.push({
-                name: 'DYANDRA GLOBAL PRESALE DAY 1',
-                link: `${target.link}`,
-                status: 'found',
-              });
-              buttonDayOneStatus = true;
-            }
-          } else {
-            result.push({
-              name: 'DYANDRA GLOBAL PRESALE DAY 1',
-              link: null,
-              status: 'skipping',
-            });
-            buttonDayOneStatus = true;
-          }
-        } else {
-          // get button day one
-          if (rows[2]?.columns[1].elements[1] && buttonDayOneStatus == false) {
-            let target = rows[2]?.columns[1].elements[1];
-            if (target.link == '') {
-              console.log(
-                formatLog(
-                  `[DYANDRA GLOBAL PRESALE] [DAY 1] [NOT FOUND] request ${i}`
-                )
-              );
-            } else {
-              const message = formatLog(
-                `[DYANDRA GLOBAL PRESALE] [DAY 1] [FOUND] ${target.link}`
-              );
-              console.log(message);
-              await sendMessageToChannel(message);
-              result.push({
-                name: 'DYANDRA GLOBAL PRESALE DAY 1',
-                link: `${target.link}`,
-                status: 'found',
-              });
-              buttonDayOneStatus = true;
-            }
-          } else {
-            result.push({
-              name: 'DYANDRA GLOBAL PRESALE DAY 1',
-              link: null,
-              status: 'skipping',
-            });
-            buttonDayOneStatus = true;
-          }
-          // get button day two
-          if (rows[4].columns[1].elements[1] && buttonDayTwoStatus == false) {
-            let target = rows[4].columns[1].elements[1];
-            if (target.link == '') {
-              console.log(
-                formatLog(
-                  `[DYANDRA GLOBAL PRESALE] [DAY 2] [NOT FOUND] request ${i}`
-                )
-              );
-            } else {
-              const message = formatLog(
-                `[DYANDRA GLOBAL PRESALE] [DAY 2] [FOUND] ${target.link}`
-              );
-              console.log(message);
-              await sendMessageToChannel(message);
-              result.push({
-                name: 'DYANDRA GLOBAL PRESALE DAY 2',
-                link: `${target.link}`,
-                status: 'found',
-              });
-              buttonDayTwoStatus = true;
-            }
-          } else {
-            result.push({
-              name: 'DYANDRA GLOBAL PRESALE DAY 2',
-              link: null,
-              status: 'skipping',
-            });
-            buttonDayTwoStatus = true;
-          }
-        }
-        if (buttonDayOneStatus == true && buttonDayTwoStatus == true) {
+        if (
+          targetedElements.link == null ||
+          targetedElements.link == undefined
+        ) {
+          console.log(formatLog(`[ERROR] NOT FOUND LINK AT ELEMENTS`));
+          foundPaths.add(path);
           break;
         }
-        i++;
-      }
-    }
-    // General Sale
-    if (askMode == 2) {
-      while (true) {
-        try {
-          data = await dyandraGlobalStore(url);
-        } catch (error) {
-          continue;
-        }
-        const rows = data.layout.sections[5].rows;
-        // just day 1
-        if (rows.length == 4) {
-          buttonDayTwoStatus = true;
-          let target = rows[1]?.columns[2].elements[1];
-          if (target && buttonDayOneStatus == false) {
-            if (target.link == '') {
-              console.log(
-                formatLog(`[GENERAL SALE] [DAY 1] [NOT FOUND] request ${i}`)
-              );
-            } else {
-              const message = formatLog(
-                `[GENERAL SALE] [DAY 1] [FOUND] ${target.link}`
-              );
-              console.log(message);
-              await sendMessageToChannel(message);
-              result.push({
-                name: 'MEMBERSHIP PRESALE DAY 1',
-                link: `${target.link}`,
-                status: 'found',
-              });
-              buttonDayOneStatus = true;
-            }
-          } else {
-            result.push({
-              name: 'GENERAL SALE DAY 1',
-              link: null,
-              status: 'skipping',
-            });
-            buttonDayOneStatus = true;
-          }
+        if (targetedElements.link == '') {
+          console.log(formatLog(`[WAITING] LINK NULL [REQUEST ${i}]`));
+          i++;
         } else {
-          // ANY DAY 2
-
-          // GETBUTTONDAYONE
-          if (rows[2]?.columns[2]?.elements[1] && buttonDayOneStatus == false) {
-            let target = rows[2]?.columns[2]?.elements[1];
-            if (target) {
-              if (target.link == '') {
-                console.log(
-                  formatLog(`[GENERAL SALE] [DAY 1] [NOT FOUND] request ${i}`)
-                );
-              } else {
-                const message = formatLog(
-                  `[GENERAL SALE] [DAY 1] [FOUND] ${target.link}`
-                );
-                console.log(message);
-                await sendMessageToChannel(message);
-                result.push({
-                  name: 'GENERAL DAY SALE DAY 1',
-                  link: `${target.link}`,
-                  status: 'found',
-                });
-                buttonDayOneStatus = true;
-              }
-            } else {
-              result.push({
-                name: 'GENERAL SALE DAY 1',
-                link: null,
-                status: 'skipping',
-              });
-              buttonDayOneStatus = true;
-            }
-          } else {
-            result.push({
-              name: 'GENERAL SALE DAY 1',
-              link: null,
-              status: 'skipping',
-            });
-            buttonDayOneStatus = true;
-          }
-          // GETBUTTON DAY TWO
-          if (rows[4]?.columns[2].elements[1] && buttonDayTwoStatus == false) {
-            let target = rows[4]?.columns[2].elements[1];
-            if (target.link == '') {
-              console.log(
-                formatLog(`[GENERAL SALE] [DAY 2] [NOT FOUND] request ${i}`)
-              );
-            } else {
-              const message = formatLog(
-                `[GENERAL SALE] [DAY 2] [FOUND] ${target.link}`
-              );
-              console.log(message);
-              await sendMessageToChannel(message);
-              result.push({
-                name: 'GENERAL SALE DAY 2',
-                link: `${target.link}`,
-                status: 'found',
-              });
-              buttonDayTwoStatus = true;
-            }
-          } else {
-            result.push({
-              name: 'GENERAL SALE DAY 2',
-              link: null,
-              status: 'skipping',
-            });
-            buttonDayTwoStatus = true;
-          }
+          let message;
+          const htmlContent = rows?.elements.find(
+            (e) => e.htmlContent
+          )?.htmlContent;
+          const cleanText = htmlContent
+            .replace(/<[^>]+>/g, '')
+            .trim()
+            .replace('\n', ' ');
+          message = formatLog(
+            `[FOUND] [BUTTON ${selectedButton.index}] [${selectedButton.column.elements.find((el) => el.label)?.label}] [${cleanText}] [${url}]\n${targetedElements.link}`
+          );
+          // if (url.includes('injakarta')) {
+          //   // message = formatLog(
+          //   //   `[FOUND] [${selectedButton.column.elements.find((el) => el.label)?.label}] [${url}]\n${targetedElements.link}`
+          //   // );
+          //   const htmlContent = rows?.elements.find(
+          //     (e) => e.htmlContent
+          //   )?.htmlContent;
+          //   const cleanText = htmlContent.replace(/<[^>]+>/g, '').trim();
+          //   message = formatLog(
+          //     `[FOUND] [BUTTON ${selectedButton.index}] [${selectedButton.column.elements.find((el) => el.label)?.label}] [${cleanText}] [${url}]\n${targetedElements.link}`
+          //   );
+          // } else {
+          //   const htmlContent = rows?.elements.find(
+          //     (e) => e.htmlContent
+          //   )?.htmlContent;
+          //   const cleanText = htmlContent.replace(/<[^>]+>/g, '').trim();
+          //   message = formatLog(
+          //     `[FOUND] [BUTTON ${selectedButton.index}] [${selectedButton.column.elements.find((el) => el.label)?.label}] [${cleanText}] [${url}]\n${targetedElements.link}`
+          //   );
+          // }
+          console.log(message);
+          await sendMessageToChannel(message);
+          foundPaths.add(path);
         }
-        if (buttonDayOneStatus == true && buttonDayTwoStatus == true) {
-          break;
-        }
-        i++;
+      }
+      if (foundPaths.size == selectButtons.length) {
+        console.log(formatLog(`[DONE] ALL BUTTON FIND`));
+        break;
       }
     }
-    console.log(result);
+    return;
   } catch (error) {
     console.log(error);
   }
