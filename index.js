@@ -43,6 +43,11 @@ const findColumnsWithLabel = (obj, keyword, pathTrace = '') => {
     process.stdout.write('\x1Bc');
     const targetPath = path.join(process.cwd(), 'target.txt');
     const url = fs.readFileSync(targetPath, 'utf-8');
+    if (!url.includes('injakarta') && !url.includes('dyandra')) {
+      console.log(formatLog('[ERROR] NOT SUPPORTING URL'));
+      throw 'NOT SUPPORTING URL';
+    }
+
     let data = await getJsonWebFormat(url);
     const { inputKeyword } = await inquirer.prompt([
       {
@@ -82,7 +87,12 @@ const findColumnsWithLabel = (obj, keyword, pathTrace = '') => {
     const foundPaths = new Set();
     let i = 1;
     while (true) {
-      const data = await getJsonWebFormat(url);
+      let data;
+      try {
+        data = await getJsonWebFormat(url);
+      } catch (error) {
+        continue;
+      }
       for (const path of selectButtons) {
         if (foundPaths.has(path)) continue;
         const selectedButton = choices.find((c) => c.path === path);
