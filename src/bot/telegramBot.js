@@ -7,11 +7,8 @@ export async function sendMessageToChannel(message) {
   let maxRetryingCount = 3;
   while (retryingCount <= maxRetryingCount) {
     try {
-      const msg = await bot.telegram.sendMessage(
-        process.env.CHANNEL_ID,
-        message
-      );
-      console.log(`success send message ${msg.text}`);
+      const msg = await bot.telegram.sendMessage(process.env.CHAT_ID, message);
+      console.log(`SUCCESS SEND MESSAGE\n${msg.text}`);
       break;
     } catch (error) {
       retryingCount++;

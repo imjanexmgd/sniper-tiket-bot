@@ -1,9 +1,11 @@
+import 'dotenv/config';
 import fs from 'fs';
 import inquirer from 'inquirer';
 import { sendMessageToChannel } from './src/bot/telegramBot.js';
 import path from 'path';
 import getJsonWebFormat from './src/core/getJsonWebFormat.js';
 import lodash from 'lodash';
+
 function formatLog(message) {
   const now = new Date();
   const time =
@@ -41,6 +43,11 @@ const findColumnsWithLabel = (obj, keyword, pathTrace = '') => {
 (async () => {
   try {
     process.stdout.write('\x1Bc');
+    if (!process.env.TOKEN_BOT || !process.env.CHAT_ID) {
+      const msg = '[ERROR] NOT FOUND CHAT_ID OR TOKEN_BOT AT ENV';
+      console.log(formatLog(msg));
+      throw msg;
+    }
     const targetPath = path.join(process.cwd(), 'target.txt');
     const url = fs.readFileSync(targetPath, 'utf-8');
     if (!url.includes('injakarta') && !url.includes('dyandra')) {
@@ -126,29 +133,9 @@ const findColumnsWithLabel = (obj, keyword, pathTrace = '') => {
             .trim()
             .replace('\n', ' ');
           message = formatLog(
-            `[FOUND] [BUTTON ${selectedButton.index}] [${selectedButton.column.elements.find((el) => el.label)?.label}] [${cleanText}] [${url}]\n${targetedElements.link}`
+            `[FOUND] [${url}] [BUTTON ${selectedButton.index}] [${selectedButton.column.elements.find((el) => el.label)?.label}] [${cleanText}]\n\n\n[WIDGET LINK] ${targetedElements.link}`
           );
-          // if (url.includes('injakarta')) {
-          //   // message = formatLog(
-          //   //   `[FOUND] [${selectedButton.column.elements.find((el) => el.label)?.label}] [${url}]\n${targetedElements.link}`
-          //   // );
-          //   const htmlContent = rows?.elements.find(
-          //     (e) => e.htmlContent
-          //   )?.htmlContent;
-          //   const cleanText = htmlContent.replace(/<[^>]+>/g, '').trim();
-          //   message = formatLog(
-          //     `[FOUND] [BUTTON ${selectedButton.index}] [${selectedButton.column.elements.find((el) => el.label)?.label}] [${cleanText}] [${url}]\n${targetedElements.link}`
-          //   );
-          // } else {
-          //   const htmlContent = rows?.elements.find(
-          //     (e) => e.htmlContent
-          //   )?.htmlContent;
-          //   const cleanText = htmlContent.replace(/<[^>]+>/g, '').trim();
-          //   message = formatLog(
-          //     `[FOUND] [BUTTON ${selectedButton.index}] [${selectedButton.column.elements.find((el) => el.label)?.label}] [${cleanText}] [${url}]\n${targetedElements.link}`
-          //   );
-          // }
-          console.log(message);
+          console.log(`${message}\n`);
           await sendMessageToChannel(message);
           foundPaths.add(path);
         }
